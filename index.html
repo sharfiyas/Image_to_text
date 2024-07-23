@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IMAGE TO TEXT CONVERTER</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script>
+        function previewImage() {
+            const file = document.getElementById('file').files[0];
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                document.getElementById('uploaded-image').src = e.target.result;
+                document.getElementById('uploaded-image').style.display = 'block';
+            };
+            if (file) {
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function uploadImage() {
+            const fileInput = document.getElementById('file');
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    extractText(data.filename);
+                }
+            });
+        }
+
+        function extractText(filename) {
+            fetch('/extract-text', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ filename: filename }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('extracted-text').value = data.text;
+            });
+        }
+    </script>
+</head>
+<body>
+    <h1>IMAGE TO TEXT CONVERTER</h1>
+    <form id="upload-form" onsubmit="event.preventDefault(); uploadImage();">
+        <label for="file">Upload Image:</label>
+        <input type="file" name="file" id="file" accept="image/*" onchange="previewImage()">
+        <button type="submit">Enter</button>
+    </form>
+
+    <h2>Uploaded Image</h2>
+    <img id="uploaded-image" src="#" alt="Uploaded Image" style="display: none;">
+
+    <h2>Extracted Text</h2>
+    <textarea id="extracted-text" rows="20" cols="50"></textarea>
+</body>
+</html>
